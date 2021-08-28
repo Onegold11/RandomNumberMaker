@@ -1,5 +1,6 @@
 package com.clonecoding.randomnumber
 
+import android.graphics.drawable.Drawable
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.view.View
@@ -7,6 +8,7 @@ import android.widget.Button
 import android.widget.NumberPicker
 import android.widget.TextView
 import android.widget.Toast
+import androidx.core.content.ContextCompat
 
 /**
  * Main Activity
@@ -48,7 +50,6 @@ class MainActivity : AppCompatActivity() {
      * Number picker
      */
     private val numberPicker: NumberPicker by lazy {
-
         findViewById(R.id.number_picker)
     }
 
@@ -88,6 +89,21 @@ class MainActivity : AppCompatActivity() {
 
         this.initRunButton()
         this.initAddButton()
+        this.initClearButton()
+    }
+
+    /**
+     * Clear button
+     */
+    private fun initClearButton() {
+
+        this.initButton.setOnClickListener {
+            this.pickNumberSet.clear()
+            this.numberTextViewList.forEach{
+                it.visibility = View.GONE
+            }
+            this.didRun = false
+        }
     }
 
     /**
@@ -112,11 +128,33 @@ class MainActivity : AppCompatActivity() {
                 return@setOnClickListener
             }
 
+            // Update text view
             val textView = this.numberTextViewList[this.pickNumberSet.size]
-            textView.visibility = View.VISIBLE
-            textView.text = this.numberPicker.value.toString()
+            this.updateNumberTextView(textView, this.numberPicker.value)
 
             this.pickNumberSet.add(this.numberPicker.value)
+        }
+    }
+
+    /**
+     * Update TextView style
+     */
+    private fun updateNumberTextView(textView: TextView, number: Int) {
+
+        var viewBackground: Drawable?
+
+        when(number) {
+            in 1..10 -> viewBackground = ContextCompat.getDrawable(this, R.drawable.circle_yellow)
+            in 11..20 -> viewBackground = ContextCompat.getDrawable(this, R.drawable.circle_blue)
+            in 21..30 -> viewBackground = ContextCompat.getDrawable(this, R.drawable.circle_red)
+            in 31..40 -> viewBackground = ContextCompat.getDrawable(this, R.drawable.circle_gray)
+            else -> viewBackground = ContextCompat.getDrawable(this, R.drawable.circle_green)
+        }
+
+        textView.apply {
+            visibility = View.VISIBLE
+            text = number.toString()
+            background = viewBackground
         }
     }
 
@@ -128,6 +166,14 @@ class MainActivity : AppCompatActivity() {
         this.runButton.setOnClickListener {
 
             val list = this.getRandomNumber()
+
+            this.didRun = true;
+
+            list.forEachIndexed { index, i ->
+                val textView = this.numberTextViewList[index]
+
+                this.updateNumberTextView(textView, i)
+            }
         }
     }
 
@@ -139,14 +185,17 @@ class MainActivity : AppCompatActivity() {
         val numberList = mutableListOf<Int>()
             .apply {
                 for (i in MIN_NUM..MAX_NUM) {
+                    if (pickNumberSet.contains(i)) {
+                        continue
+                    }
                     this.add(i)
                 }
             }
 
         numberList.shuffle()
 
-        return numberList.subList(0, 6).sorted()
+        val newList = this.pickNumberSet.toList() + numberList.subList(0, 5 - this.pickNumberSet.size)
+
+        return newList.sorted()
     }
-
-
 }
